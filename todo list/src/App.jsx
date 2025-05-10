@@ -1,44 +1,52 @@
-import { useState } from "react"
-import "./style.css"
+import { useEffect, useState } from "react"
+import { NewTodoForm } from "./NewTodoForm"
+import "./styles.css"
+import { TodoList } from "./TodoList"
 
 export default function App() {
+  const [todos, setTodos] = useState(() => {
+    const localValue = localStorage.getItem("ITEMS")
+    if (localValue == null) return []
 
-  const [newitem, setNewItem] = useState("")
-  const[todos, setTodos] = useState([])
-  function handleSub(e) {
-    e.preventDefault()
+    return JSON.parse(localValue)
+  })
 
+  useEffect(() => {
+    localStorage.setItem("ITEMS", JSON.stringify(todos))
+  }, [todos])
+
+  function addTodo(title) {
     setTodos(currentTodos => {
-      return[
+      return [
         ...currentTodos,
-        {id: crypto.randomUUID(), title: newitem, completed: false},
+        { id: crypto.randomUUID(), title, completed: false },
       ]
     })
   }
 
-  return <>
-  <form onSubmit={handleSub} className = "new-item-form">
-    <div className="form-row">
-      <label htmlFor="item">New Item</label>
-      <input value={newitem}
-      onChange={e => setNewItem(e.target.value)} 
-      type="text" id="item" />
-    </div>
-    <button className="butt">add</button>
-  </form>
-  <h1 className="Header">Todo List</h1> 
-  <ul className="list">
-    {todos.map(todo=> {
-      return(
-        <li key={todo.id}>
-          <label htmlFor="">
-            <input type="checkbox" checked={todo.completed} />
-            {todo.title}
-          </label>
-          <button className="btn btn-danger">Delete</button>
-        </li>
-      )
-    })}
-  </ul>
-  </>
+  function toggleTodo(id, completed) {
+    setTodos(currentTodos => {
+      return currentTodos.map(todo => {
+        if (todo.id === id) {
+          return { ...todo, completed }
+        }
+
+        return todo
+      })
+    })
+  }
+
+  function deleteTodo(id) {
+    setTodos(currentTodos => {
+      return currentTodos.filter(todo => todo.id !== id)
+    })
+  }
+
+  return (
+    <>
+      <NewTodoForm onSubmit={addTodo} />
+      <h1 className="header">Todo List</h1>
+      <TodoList todos={todos} toggleTodo={toggleTodo} deleteTodo={deleteTodo} />
+    </>
+  )
 }
